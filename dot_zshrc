@@ -1,0 +1,117 @@
+#!/bin/zsh
+
+# locale
+# ======
+export LANG=en_US.UTF-8
+export LC_CTYPE=en_US.UTF-8
+
+# terminal titles
+# ===============
+setWindowTitle() { print -Pn "\e]0;${1}\a" }
+
+# exa
+# ===
+alias ls='exa'
+
+# term
+# ====
+export TERM=xterm-256color
+
+# nix
+# ===
+if [[ -f ${HOME}/.nix-profile/etc/profile.d/nix.sh ]]; then
+  source "${HOME}/.nix-profile/etc/profile.d/nix.sh"
+fi
+
+# editor
+# ======
+export EDITOR='emacsclient'
+
+# PATH
+# ====
+export PATH="/usr/local/bin:${HOME}/.local/bin:${PATH}"
+
+# zplug
+# =====
+if [[ ! -d ~/.zplug ]]; then
+    echo "installing zplug..."
+    git clone https://github.com/b4b4r07/zplug ~/.zplug
+fi
+
+source ~/.zplug/init.zsh
+
+zplug 'zplug/zplug', hook-build:'zplug --self-manage'
+
+zplug 'sharat87/zsh-vim-mode'
+zplug 'chrissicool/zsh-256color'
+zplug 'zsh-users/zsh-autosuggestions', defer:2
+zplug 'zdharma/fast-syntax-highlighting', defer:2
+zplug "b4b4r07/zsh-vimode-visual", defer:3
+zplug 'aperezdc/zsh-fzy'
+zplug "bhilburn/powerlevel9k", use:powerlevel9k.zsh-theme
+
+if ! zplug check; then
+    zplug install
+fi
+
+zplug load
+
+# fzy
+# ===
+bindkey '\ec' fzy-cd-widget
+bindkey '^T'  fzy-file-widget
+bindkey '^R'  fzy-history-widget
+
+# history
+# =======
+HISTFILE="${HOME}/.zsh_history"
+HISTSIZE=10000000
+SAVEHIST=10000000
+
+setopt HIST_IGNORE_SPACE
+setopt INC_APPEND_HISTORY
+setopt SHARE_HISTORY
+
+# git
+# ===
+export DISABLE_UNTRACKED_FILES_DIRTY="true"
+export DISABLE_AUTO_UPDATE="true"
+
+# ansible
+# =======
+export ANSIBLE_NOCOWS=1
+
+# go
+# ==
+export GOPATH="${HOME}/.go"
+export PATH="${GOPATH}/bin:${PATH}"
+
+# powerlevel9k
+# ============
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=()
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context time dir command_execution_time status)
+
+# utility functions
+# ==============
+fix-ssh() {
+  export "$(tmux show-environment | grep '^SSH_AUTH_SOCK=')"
+}
+
+# grab IPs for use with sshuttle
+_sshuttle_ips() {
+  for record in "${@}"; do
+    dig +short "${record}" | perl -pne 's{\n}{/32 }'
+  done
+}
+
+sshuttle_dns() {
+  sshuttle -vr lotus "$(_sshuttle_ips "${@}")"
+}
+
+copy_keys() {
+  sshpass -p "$(pass show current_password)" ssh-copy-id -i ~/.ssh/id_ae.pub "${@}"
+}
+
+# gpg
+# ===
+ export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"

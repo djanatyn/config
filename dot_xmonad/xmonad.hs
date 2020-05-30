@@ -14,8 +14,10 @@ import XMonad.Layout.Spacing (Border (..), spacingRaw)
 import XMonad.Layout.Tabbed
 import qualified XMonad.StackSet as W
 import XMonad.Util.EZConfig
+import XMonad.Util.Loggers
 import XMonad.Util.Run (spawnPipe)
 import XMonad.Util.Themes
+import XMonad.Util.WorkspaceCompare
 
 myWorkspaces :: Forest String
 myWorkspaces =
@@ -73,13 +75,14 @@ myTreeConf =
       ts_extra = 0xff000000
     }
 
-myLayouts =
-  avoidStruts
-    $ spacingRaw True (Border 0 5 5 5) True (Border 5 5 5 5) True
-    $ emptyBSP
-      ||| tabbed shrinkText (theme smallClean)
-      ||| Column (10 / 7)
-      ||| Full
+extraKeys :: [((KeyMask, KeySym), X ())]
+extraKeys =
+  [ ((mod1Mask, xK_f), treeselectWorkspace myTreeConf myWorkspaces W.greedyView),
+    ((mod1Mask .|. shiftMask, xK_f), treeselectWorkspace myTreeConf myWorkspaces W.shift),
+    ((mod1Mask, xK_p), spawn "rofi -combi-modi run,ssh,window -show combi -theme 'Arc-Dark'"),
+    ((mod1Mask .|. shiftMask, xK_p), spawn "rofi -show window -theme 'Arc-Dark'"),
+    ((mod1Mask .|. shiftMask, xK_t), sendMessage ToggleStruts)
+  ]
 
 main :: IO ()
 main = do
@@ -89,21 +92,27 @@ main = do
   spawn "bash ~/.screenlayout/default.sh"
   xmonad $
     ewmh
-      defaultConfig
+      def
         { manageHook = manageDocks <+> manageHook defaultConfig,
           workspaces = toWorkspaces myWorkspaces,
-          logHook = dynamicLogWithPP $ sjanssenPP {ppOutput = hPutStrLn xmobar},
-          layoutHook = myLayouts,
+          logHook =
+            dynamicLogWithPP $
+              xmobarPP
+                { ppOutput = hPutStrLn xmobar,
+                  ppExtras = [loadAvg, battery],
+                  ppSort = getSortByXineramaRule
+                },
+          layoutHook =
+            avoidStruts $ spacingRaw True (Border 0 5 5 5) True (Border 5 5 5 5) True $
+              emptyBSP
+                ||| tabbed shrinkText (theme smallClean)
+                ||| Column (10 / 7)
+                ||| Full,
           handleEventHook = handleEventHook defaultConfig <+> docksEventHook,
           borderWidth = 1,
           terminal = "urxvt",
           normalBorderColor = "#053569",
           focusedBorderColor = "#0954B5",
-          focusFollowsMouse = False
+          focusFollowsMouse = True
         }
-      `additionalKeys` [ ((mod1Mask, xK_f), treeselectWorkspace myTreeConf myWorkspaces W.greedyView),
-                         ((mod1Mask .|. shiftMask, xK_f), treeselectWorkspace myTreeConf myWorkspaces W.shift),
-                         ((mod1Mask, xK_p), spawn "rofi -show run -theme Paper"),
-                         ((mod1Mask .|. shiftMask, xK_p), spawn "rofi -show window -theme Paper"),
-                         ((mod1Mask .|. shiftMask, xK_t), sendMessage ToggleStruts)
-                       ]
+      `additionalKeys` extraKeys

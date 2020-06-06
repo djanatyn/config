@@ -80,7 +80,6 @@ extraKeys =
   [ ((mod1Mask, xK_f), treeselectWorkspace myTreeConf myWorkspaces W.greedyView),
     ((mod1Mask .|. shiftMask, xK_f), treeselectWorkspace myTreeConf myWorkspaces W.shift),
     ((mod1Mask, xK_p), spawn "rofi -show run -theme 'Arc-Dark'"),
-    ((mod1Mask .|. shiftMask, xK_p), spawn "rofi -combi-modi window -show combi -theme 'Arc-Dark'"),
     ((mod1Mask .|. shiftMask, xK_p), spawn "rofi -show window -theme 'Arc-Dark'"),
     ((mod1Mask .|. shiftMask, xK_t), sendMessage ToggleStruts)
   ]

@@ -5,17 +5,14 @@ templates:
     - orchid
 
 hosts:
-  github.com:
-    Inherits: conduit
-
   orchid:
-    Hostname: {{ pass "chezmoi/orchid-ip" }}
+    Hostname: orchid.flowercluster.io
     User: djanatyn
     Port: 8888
 
   lotus:
     Inherits: conduit
-    Hostname: {{ pass "chezmoi/lotus-ip" }}
+    Hostname: lotus.flowercluster.io
     User: djanatyn
 
   defaults:
